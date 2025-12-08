@@ -29,6 +29,11 @@ const updateUserRole = async (req, res)=>{
             update users set role_id = $1 where id = $2 returning id, name, email, role_id
             `,[role_id,userId]
         )
+        await pool.query(
+         `INSERT INTO audit_logs (user_id, action) VALUES ($1, $2)`,
+            [req.user.id, `Updated role for user ${userId} to role ${role_id}`]
+        );
+
         return res.status(201).json({message:'User role updated successfully', user:updateQuery.rows[0]})
         
     } catch (error) {
@@ -44,6 +49,11 @@ const deleteUser = async (req, res)=>{
         await pool.query(`
             delete from users where id = $1
             `,[id])
+        await pool.query(
+            `INSERT INTO audit_logs (user_id, action) VALUES ($1, $2)`,
+            [req.user.id, `Deleted user ${id}`]
+        );
+
         return res.status(200).json({message:'user deleted successfully'})
         
     } catch (error) {
