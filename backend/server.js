@@ -7,6 +7,7 @@ app.use(express.json())
 app.use(cors())
 
 const pool = require('./config/db')
+//testing purpose
 app.get('/test-db', async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
@@ -16,12 +17,16 @@ app.get('/test-db', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
 app.get('/', (req, res)=>{
     res.send('Application is running in the backend')
 })
 
+app.use('/api/auth', require('./routes/authRoutes'))
+
 app.use((err, req, res, next)=>{
-    console.error(err.message)
+    console.error(err.stack)
     res.status(500).json({message:err.message || 'Internal server error'})
 })
 
