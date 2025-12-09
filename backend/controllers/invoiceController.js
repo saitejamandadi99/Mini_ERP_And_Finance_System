@@ -51,4 +51,85 @@ const getInvoicesById = async (req, res)=>{
     }
 }
 
-module.exports = {createInvoice, getInvoices, getInvoicesById}
+const  getDueInvoices = async (req, res)=>{
+    try {
+        const result = await pool.query(
+            `
+            SELECT 
+                i.*,
+                (
+                    i.amount - COALESCE(
+                        (SELECT SUM(p.converted_amount) 
+                        FROM payments p 
+                        WHERE p.invoice_id = i.id), 
+                    0)
+                ) AS outstanding_amount
+            FROM invoices i
+            WHERE 
+                (i.status = 'Pending' OR i.status = 'Partially Paid')
+                AND i.due_date < CURRENT_DATE
+            ORDER BY i.due_date ASC;
+            `
+        )
+        return res.status(200).json({message:'Due Invoices Fetched successfully', due_invoices: result.rows})
+    } catch (error) {
+        return res.status(500).json({message:error.message || 'Internal server error'})
+    }
+}
+
+const getReceivableSummary = async (req, res)=>{
+    try {
+        const result = await pool.query(`
+            SELECT 
+                c.id AS customer_id,
+                c.name AS customer_name,
+                SUM(i.amount - COALESCE(p.total_paid, 0)) AS receivable_amount
+            FROM customers c
+            LEFT JOIN invoices i ON c.id = i.customer_id
+            LEFT JOIN (
+                SELECT invoice_id, SUM(converted_amount) AS total_paid 
+                FROM payments GROUP BY invoice_id
+            ) p ON i.id = p.invoice_id
+            WHERE i.status IN ('Pending', 'Partially Paid')
+            GROUP BY c.id, c.name
+            ORDER BY receivable_amount DESC;
+        `);
+
+        return res.status(200).json({
+            message: "Receivable summary generated",
+            receivables: result.rows
+        });
+    } catch (error) {
+        return res.status(500).json({message:error.message || 'Internal server error'})
+    }
+}
+
+const getPayableSummary = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                v.id AS vendor_id,
+                v.name AS vendor_name,
+                SUM(i.amount - COALESCE(p.total_paid, 0)) AS payable_amount
+            FROM vendors v
+            LEFT JOIN invoices i ON v.id = i.vendor_id
+            LEFT JOIN (
+                SELECT invoice_id, SUM(converted_amount) AS total_paid 
+                FROM payments GROUP BY invoice_id
+            ) p ON i.id = p.invoice_id
+            WHERE i.status IN ('Pending', 'Partially Paid')
+            GROUP BY v.id, v.name
+            ORDER BY payable_amount DESC;
+        `);
+
+        return res.status(200).json({
+            message: "Payable summary generated",
+            payables: result.rows
+        });
+
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = {createInvoice, getInvoices, getInvoicesById, getDueInvoices, getReceivableSummary , getPayableSummary}
