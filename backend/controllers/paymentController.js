@@ -1,57 +1,46 @@
 const pool = require('../config/db')
+const { getRate } = require('./exchangeRateController');
 
-const recordPayment = async (req,res)=>{
-    const client = await pool.connect()
+const recordPayment = async (req, res) => {
+    const client = await pool.connect();
     try {
-        const {invoice_id, amount, currency, converted_amount, method, note } = req.body
-        if(!invoice_id || !amount){
-            return res.status(400).json({message: 'Amount and invoice_id are required'})
-        }
-        await client.query('BEGIN') 
+        const { invoice_id, amount, currency, method, note } = req.body;
 
-        const invoiceResult = await client.query(`
-            SELECT amount ,status from invoices where id =$1
-            `,[invoice_id])
-        if (invoiceResult.rows.length ===0){
-            return res.status(404).json({message:'Invoice not found'})
+        if (!invoice_id || !amount) {
+            return res.status(400).json({ message: "invoice_id and amount required" });
         }
-        const invoice = invoiceResult.rows[0]
 
-        const paymentResult = await client.query(`
-            SELECT COALESCE(SUM(converted_amount),0) as total_paid from payments where invoice_id =$1
-            `,[invoice_id]) 
-        const totalPaid = Number(paymentResult.rows[0].total_paid)  
-        const outstanding = Number(invoice.amount) - totalPaid
-        if(amount > outstanding){
-            return res.status(400).json({message:'Payment exceed outstanding amount'})
+        await client.query("BEGIN");
+
+        let converted_amount = amount;
+
+        if (currency !== 'USD') {
+            const rate = await getRate(currency);
+            if (!rate) return res.status(400).json({ message: "Exchange rate missing" });
+
+            converted_amount = Number(amount) * Number(rate);
         }
 
         const newPayment = await client.query(
-            `insert into payments(invoice_id, amount, currency, converted_amount, method, note ) values ($1,$2,$3,$4,$5,$6) returning * `, [invoice_id, amount, currency || 'USD' , converted_amount || amount, method, note ]
-        )
-        const newTotalPaid = totalPaid + amount 
-        let newStatus = 'Pending'
-        if(newTotalPaid === Number(invoice.amount)) newStatus = 'Paid'
-        else if (newTotalPaid > 0 ) newStatus ='Partially Paid'
+            `
+            INSERT INTO payments (invoice_id, amount, currency, converted_amount, method, note)
+            VALUES ($1,$2,$3,$4,$5,$6)
+            RETURNING *
+            `,
+            [invoice_id, amount, currency, converted_amount, method, note]
+        );
 
-        await client.query(
-            `update invoices set status = $1 where id = $2`, [newStatus, invoice_id]
-        )
-        await client.query('COMMIT')
+        await client.query("COMMIT");
+        res.status(201).json({ message: "Payment recorded", payment: newPayment.rows[0] });
 
-        return res.status(201).json({
-            message:'Payment record success',
-            payment: newPayment.rows[0],
-            invoice_status: newStatus
-        })
     } catch (error) {
         await client.query("ROLLBACK");
-        return res.status(500).json({message:error.message || 'Internal server error'})
+        res.status(500).json({ message: error.message });
+    } finally {
+        client.release();
     }
-    finally{
-        client.release()
-    }
-}
+};
+
 
 const getPaymentsForInvoice =  async (req, res)=>{
     try {
