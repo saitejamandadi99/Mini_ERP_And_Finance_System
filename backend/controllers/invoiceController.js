@@ -1,11 +1,20 @@
 const pool = require('../config/db')
-
+const {getRate} = require('./exchangeRateController')
 
 const createInvoice = async (req ,res)=>{
     try {
-        const {customer_id, vendor_id, project_id, amount , currency, converted_amount , due_date} = req.body 
+        const {customer_id, vendor_id, project_id, amount , currency , due_date} = req.body 
         if(!amount || !customer_id){
             return res.status(400).json({message:'Amount and customer id are required'})
+        }
+
+        let converted_amount = amount 
+        
+        if(currency !== "USD"){
+            const rate = await getRate(currency)
+            if(!rate) return res.status(400).json({message:'Exchange rate not found'})
+            
+            converted_amount = Number(amount) * Number(rate)
         }
         const result = await pool.query(
             `
