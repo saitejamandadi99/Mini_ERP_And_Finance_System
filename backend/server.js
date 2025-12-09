@@ -30,6 +30,8 @@ app.use('/api/audit', require('./routes/auditRoutes'));
 app.use('/api/accounts', require('./routes/accountRoutes'));
 app.use('/api/journal', require('./routes/journalEntryRoutes'));
 app.use('/api/finance', require('./routes/financialRoutes'));
+app.use('/api/vendors', require('./routes/vendorRoutes'));
+app.use('/api/customers', require('./routes/customerRoutes'));
 
 
 

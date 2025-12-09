@@ -14,8 +14,8 @@ const  getVendors = async (req , res)=>{
 const createVendor = async(req, res)=>{
     try {
         const {name, email , phone, address} = req.body
-        if(!name || !email || !phone || !address){
-            return res.status(400).json({message:'All fields are required'})
+        if(!name){
+            return res.status(400).json({message:'Name is required'})
         }
         const result = await pool.query(
             `insert into vendors (name , email, phone, address) values ($1, $2,$3,$4) returning *`, [name, email, phone, address]
