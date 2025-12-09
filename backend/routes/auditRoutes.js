@@ -6,6 +6,6 @@ const checkRole = require('../middleware/roleMiddleware');
 const { getAuditLogs } = require('../controllers/auditController');
 
 // Admin only route
-router.get('/', verifyToken, checkRole([1]), getAuditLogs);
+router.get('/', authMiddleware, checkRole([1]), getAuditLogs);
 
 module.exports = router;
