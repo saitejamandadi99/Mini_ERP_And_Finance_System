@@ -55,4 +55,4 @@ const getPaymentsForInvoice =  async (req, res)=>{
     }
 }
 
-module.exports = {recordPayment, getPaymentsForInvoice}
+module.exports = {recordPayment, getPaymentsForInvoice}  

@@ -34,6 +34,8 @@ app.use('/api/vendors', require('./routes/vendorRoutes'));
 app.use('/api/customers', require('./routes/customerRoutes'));
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/exchange-rates', require('./routes/exchangeRateRoutes'));
+
 
 
 
