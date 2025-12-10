@@ -37,8 +37,7 @@ app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/exchange-rates', require('./routes/exchangeRateRoutes'));
 app.use("/api/ai", require("./routes/aiRoutes"));
 app.use("/api/project-health", require("./routes/projectHealthRoutes"));
-
-
+app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 
 app.use((err, req, res, next)=>{
     console.error(err.stack)
