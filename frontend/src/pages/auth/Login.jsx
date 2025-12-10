@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import Loader from '../../components/Loader'
 import InputField from '../../components/InputField'
 import FormCard from '../../components/FormCard'
+import axios from 'axios'
 
 const Login = () =>{
     const [form, setForm] = useState({email:'', password:''})
@@ -12,16 +13,31 @@ const Login = () =>{
     const handleChange = (e) =>{
         setForm({...form, [e.target.name]:e.target.value })
     } 
+
     const handleLogin = async (e)=>{
         e.preventDefault()
+        setIsLoading(true)
         try {
-            console.log("login details", form)
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`,form)
+            if(response.status === 200){
+                setSuccess(response?.data?.message)
+                localStorage.setItem('token', response.data.token)
+                setError('')
+                setForm({email:'', password:''})
+                 setTimeout(() => {
+                    window.location.href = "/dashboard";
+                }, 800);
             
+            }    
         } catch (error) {
-            setError(error.message)
-            console.error(error)
+            setError(error.response?.data?.message || 'Error while logging user')
+            setSuccess('')
+        }
+        finally{
+            setIsLoading(false)
         }
     }
+
 
     const renderLoginForm = () =>{
         return(
@@ -50,7 +66,7 @@ const Login = () =>{
 
                         <button type='submit' className='w-full bg-blue-600 text-white py-2 rounded-lg mt-4 font-medium hover:bg-blue-700 transition-all'>Login</button>
                         <p className='text-center text-sm text-gray-600 mt-4'>Don't have an account? <a href='/register' className='text-blue-600 hover:underline'>Register</a></p>
-                        {error && <p className='text-center text-sm text-green-600 mt-4'>{error}</p>}
+                        {error && <p className='text-center text-sm text-red-600 mt-4'>{error}</p>}
                         {success && <p className='text-center text-sm text-green-600 mt-4'>{success}</p>}
                     </form>
                 </FormCard>

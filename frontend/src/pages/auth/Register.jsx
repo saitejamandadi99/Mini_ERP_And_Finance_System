@@ -29,6 +29,7 @@ const Register = () =>{
             }    
         } catch (error) {
             setError(error.response?.data?.message || 'Error while creating user')
+            setSuccess('')
         }
         finally{
             setIsLoading(false)
