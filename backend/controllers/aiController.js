@@ -11,8 +11,8 @@ const getRiskScore = async (req , res)=>{
                 SELECT invoice_id, SUM(converted_amount) AS total_paid
                 FROM payments GROUP BY invoice_id
         ) p ON i.id = p.invoice_id
-        WHERE i.status IN ('Pending', 'Partially Paid)
-        AND i.due_date < Current_date;
+        WHERE i.status IN ('Pending', 'Partially Paid')
+        AND i.due_date < CURRENT_DATE;
             `)
 
         const overdueAmount = Number(overdue.rows[0].overdue_amount || 0)
@@ -41,7 +41,7 @@ const getRiskScore = async (req , res)=>{
         //cash balance => assets containing cash or bank
         const cash = await pool.query(`
             select sum(balance) as cash_total from accounts where name  
-            Ilike '%cash%' or name ilike '%bank%' 
+            ILIKE '%cash%' or name ILIKE '%bank%' 
             `)
         const cashBalance = Number(cash.rows[0].cash_total || 0)
 
