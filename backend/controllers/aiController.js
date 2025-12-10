@@ -75,4 +75,63 @@ const getRiskScore = async (req , res)=>{
     }
 }
 
-module.exports = {getRiskScore}
+const pool = require("../config/db");
+
+
+// CASH FLOW FORECAST API
+const getCashFlowForecast = async (req, res) => {
+    try {
+        // 1. Get last 6 months inflow (customer payments)
+        const inflowResult = await pool.query(`
+            SELECT 
+                DATE_TRUNC('month', p.payment_date) AS month,
+                SUM(p.converted_amount) AS total_inflow
+            FROM payments p
+            JOIN invoices i ON p.invoice_id = i.id
+            WHERE i.customer_id IS NOT NULL
+              AND p.payment_date >= CURRENT_DATE - INTERVAL '6 months'
+            GROUP BY month
+            ORDER BY month ASC;
+        `);
+
+        // 2. Get last 6 months outflow (vendor payments)
+        const outflowResult = await pool.query(`
+            SELECT 
+                DATE_TRUNC('month', p.payment_date) AS month,
+                SUM(p.converted_amount) AS total_outflow
+            FROM payments p
+            JOIN invoices i ON p.invoice_id = i.id
+            WHERE i.vendor_id IS NOT NULL
+              AND p.payment_date >= CURRENT_DATE - INTERVAL '6 months'
+            GROUP BY month
+            ORDER BY month ASC;
+        `);
+
+        // Convert to numbers for easier calculation
+        const inflow = inflowResult.rows.map(r => Number(r.total_inflow || 0));
+        const outflow = outflowResult.rows.map(r => Number(r.total_outflow || 0));
+
+        // Calculate averages
+        const avgInflow = inflow.length ? inflow.reduce((a, b) => a + b, 0) / inflow.length : 0;
+        const avgOutflow = outflow.length ? outflow.reduce((a, b) => a + b, 0) / outflow.length : 0;
+
+        // Forecast next month
+        const forecast = avgInflow - avgOutflow;
+
+        return res.status(200).json({
+            inflow_history: inflow,
+            outflow_history: outflow,
+            average_inflow: Math.round(avgInflow),
+            average_outflow: Math.round(avgOutflow),
+            forecast_next_month: Math.round(forecast)
+        });
+
+    } catch (error) {
+        return res.status(500).json({ message: error.message || "Internal server error" });
+    }
+};
+
+module.exports = { getCashFlowForecast };
+
+
+module.exports = {getRiskScore , getCashFlowForecast}
