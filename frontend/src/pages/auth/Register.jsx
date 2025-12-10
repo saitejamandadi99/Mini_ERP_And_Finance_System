@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import Loader from '../../components/Loader'
 import InputField from '../../components/InputField'
 import FormCard from '../../components/FormCard'
+import axios from 'axios'
 
 const Register = () =>{
     const [form, setForm] = useState({name:'', email:'', password:'', role_id:''})
@@ -14,13 +15,25 @@ const Register = () =>{
     } 
     const handleRegister = async (e)=>{
         e.preventDefault()
+        setIsLoading(true)
         try {
-            console.log("Register details", form)
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`,form)
+            if(response.status === 201){
+                setSuccess(response?.data?.message)
+                setError('')
+                setForm({name:'', email:'', password:'', role_id:''})
+                setTimeout(()=>{
+                window.location.href = '/login'
+            }, 1000)
             
+            }    
         } catch (error) {
-            setError(error.message)
-            console.error(error)
+            setError(error.response?.data?.message || 'Error while creating user')
         }
+        finally{
+            setIsLoading(false)
+        }
+        
     }
 
     const renderRegisterForm = () =>{
@@ -71,7 +84,7 @@ const Register = () =>{
 
                         <button type='submit' className='w-full bg-blue-600 text-white py-2 rounded-lg mt-4 font-medium hover:bg-blue-700 transition-all'>Register</button>
                         <p className='text-center text-sm text-gray-600 mt-4'>Already have an account? <a href='/login' className='text-blue-600 hover:underline'>Login</a></p>
-                        {error && <p className='text-center text-sm text-green-600 mt-4'>{error}</p>}
+                        {error && <p className='text-center text-sm text-red-600 mt-4'>{error}</p>}
                         {success && <p className='text-center text-sm text-green-600 mt-4'>{success}</p>}
                     </form>
                 </FormCard>
