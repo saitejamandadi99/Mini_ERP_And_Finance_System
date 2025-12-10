@@ -75,8 +75,6 @@ const getRiskScore = async (req , res)=>{
     }
 }
 
-const pool = require("../config/db");
-
 
 // CASH FLOW FORECAST API
 const getCashFlowForecast = async (req, res) => {
