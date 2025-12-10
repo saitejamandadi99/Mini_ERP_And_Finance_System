@@ -1,6 +1,7 @@
 import Loader from "./components/Loader";
 import InputField from "./components/InputField";
-
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 export default function App() {
   return (
     <div className="p-10">
@@ -11,6 +12,8 @@ export default function App() {
       <button className="mt-5 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
         Test Button
       </button>
+      <Login />
+      <Register />
       <Loader />
       <InputField />
     </div>
