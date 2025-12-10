@@ -24,7 +24,7 @@ const Login = () =>{
                 localStorage.setItem('token', response.data.token)
                 setError('')
                 setForm({email:'', password:''})
-                 setTimeout(() => {
+                setTimeout(() => {
                     window.location.href = "/dashboard";
                 }, 800);
             
