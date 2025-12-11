@@ -1,7 +1,7 @@
-import KpiCard from "../../components/KpiCard";
-import LineChart from "../../components/LineChart";
-import AlertList from "../../components/AlertList";
-import RiskCard from "../../components/RiskCard";
+import KpiCard from "../../components/dashboard/KpiCard";
+import LineChart from "../../components/dashboard/LineChart";
+import AlertList from "../../components/dashboard/AlertList";
+import RiskCard from "../../components/dashboard/RiskCard";
 import useDashboard from '../../hooks/useDashboard'
 import Loader from "../../components/Loader";
 const Dashboard = () =>{
