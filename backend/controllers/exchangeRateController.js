@@ -16,18 +16,16 @@ const addExchangeRates = async (req , res)=>{
     }
 }
 
-const getRate = async (req, res)=>{
-    const result = await pool.query(
-        `
+const getRate = async (target_currency) => {
+    const result = await pool.query(`
         SELECT rate FROM exchange_rates
         WHERE target_currency = $1
         ORDER BY date DESC
         LIMIT 1
-        `,
-        [target_currency]
-    );
+    `, [target_currency]);
 
     return result.rows.length ? result.rows[0].rate : null;
-}
+};
+
 
 module.exports = {addExchangeRates, getRate}
